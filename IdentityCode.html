@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+身份证号：<input type="text" class="id" id="Identity">
+<br>
+<input type="submit" value="提交">
+<script src="jquery-1.12.4.js"></script>
+<script>
+    //身份证号合法性验证:130631 19861114 130 8
+    // 排列顺序从左至右依次为：六位数字地址码，八位数字出生日期码，三位数字顺序码，最后一位是数字校验码。
+    //18位身份证号:第17位为偶数：女，第17位为奇数：男
+    //支持地址编码、出生日期、校验位验证
+    
+    function IdentityCodeValid(code) {
+        var city={11:"北京",12:"天津",13:"河北",14:"山西",15:"内蒙古",21:"辽宁",22:"吉林",23:"黑龙江 ",31:"上海",32:"江苏",33:"浙江",34:"安徽",35:"福建",36:"江西",37:"山东",41:"河南",42:"湖北 ",43:"湖南",44:"广东",45:"广西",46:"海南",50:"重庆",51:"四川",52:"贵州",53:"云南",54:"西藏 ",61:"陕西",62:"甘肃",63:"青海",64:"宁夏",65:"新疆",71:"台湾",81:"香港",82:"澳门",91:"国外 "};
+        var tip = "";
+        //开关思想
+        var pass= true;
+        //正则表达式
+        //运用逻辑或的短路思想，当你不输入时或者身份证号格式错误时即为假
+        //找真：如果第一个式子结果能转换为true，逻辑或表达式的结果就是第一个式子的值；否则就是第二个式子的值
+        //严格匹配：只出现一次，有且只有一个
+        //？0/1
+        if(!code || !/^\d{6}(18|19|20)?\d{2}(0[1-9]|1[012])(0[1-9]|[12]\d|3[01])\d{3}(\d|X)$/i.test(code)){
+            tip = "身份证号格式错误";
+            pass = false;
+        }
+        //判断前两位，是否在city中存在该数字
+        else if(!city[code.substr(0,2)]){
+            tip = "地址编码错误";
+            pass = false;
+        }
+        else{
+            //18位身份证需要验证最后一位校验位
+            if(code.length == 18){
+                var arr = code.split('');//将字符串转换成数组
+                //∑(ai×Wi)(mod 11)
+                //加权因子
+                var factor = [ 7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2 ];
+                //校验位
+                var parity = [ 1, 0, 'X', 9, 8, 7, 6, 5, 4, 3, 2 ];//对应余数0-10
+                var sum = 0;
+                var ai = 0;
+                var wi = 0;
+                for (var i = 0; i < 17; i++)
+                {
+                    ai = arr[i];//遍历身份证号前17位
+                    wi = factor[i];//遍历加权因子对应的17位
+                    sum += ai * wi;//对应项相乘，在求和
+                }
+                //取余数作为parity的下标，进行取值
+                var last = parity[sum % 11];
+                //判断输出身份证第18位 和 校验和算法计算的结果 是否相同
+                if(last != code[17]){
+                    tip = "校验位错误";
+                    pass =false;
+                }
+            }
+        }
+        //开关思想，只有以上条件全部满足，pass = true 时，才提示正确
+        if(!pass){
+            alert(tip);
+        } else{
+            alert( "身份证号正确!!!" );
+            if(arr[16]%2 == 0){
+                console.log ( "女士" );
+            }else{
+                console.log ( "男士" );
+            }
+
+            var sheng = code.substr(0,2) + '0000';
+            var s = getPlace(sheng);
+            // console.log(sheng);
+            var shi = code.substr(0,4) + '00';
+            getPlace(shi);
+            // console.log(shi);
+            var qu = code.substr(0,6);
+            getPlace(qu);
+            // console.log(qu);
+
+            function getPlace(number){
+                var xhr = new XMLHttpRequest();
+                xhr.open('get','id.php?city=' + number,false);
+                xhr.onload = function(){
+                // console.log(xhr.responseText);
+                var arr = JSON.parse(xhr.responseText);
+                // console.log(arr);
+                console.log(arr[0].REGION_NAME);             
+                }
+                xhr.send();
+                
+            }
+            
+        }
+        // return pass;
+    }
+
+
+    $("[type = 'submit']").on('click',function (  ) {
+        $num = $("#Identity").val();
+        IdentityCodeValid($num);
+    })
+    // 130631198611141308
+    // 36062219700326762X
+    // 450423199409290420
+
+
+
+</script>
+</body>
+</html>
